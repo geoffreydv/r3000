@@ -3,10 +3,12 @@ import yaml
 import os
 import subprocess
 
-from status import GitStructureUnknown, LingeringReleaseBranch, NoGitRepositoryStatus, ReleaseCouldBeInteresting, ReleaseProbablyNotInteresting, TempAllGoodStatus
+from status import GitStructureUnknown, LingeringReleaseBranch, NoGitRepositoryStatus, ReleaseCouldBeInteresting, ReleaseProbablyNotInteresting, ReleaseBranchReady
 
 
-def get_project_status(project_location):
+def get_project_status(project):
+
+    project_location = project.get('location')
 
     if not os.path.exists(os.path.join(project_location, '.git')):
         return NoGitRepositoryStatus(project_location)
@@ -34,7 +36,7 @@ def get_project_status(project_location):
     if commit_count == 0:
         return LingeringReleaseBranch(project_location, latest_release_branch)
 
-    return TempAllGoodStatus()
+    return ReleaseBranchReady(project.get("technical-name"), latest_release_branch)
 
 
 def find_git_branches_starting_with_name(repository_location, starts_with):
@@ -62,16 +64,15 @@ def prepare_workspace(project):
 
 def list_status(project):
     name = project.get('name')
-    location = project.get('location')
 
-    status = get_project_status(location)
+    status = get_project_status(project)
 
     print(f"{status.icon()} {name} - {status.display_information()}")
 
     next_actions = status.possible_next_actions()
     if next_actions:
         for action in next_actions:
-            print(f"\t- Hint: {action}")
+            print(f"  - {action}")
 
 
 if __name__ == '__main__':

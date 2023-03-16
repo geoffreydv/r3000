@@ -10,13 +10,22 @@ class Status:
         return []
 
 
-class TempAllGoodStatus(Status):
+class ReleaseBranchReady(Status):
+
+    def __init__(self, shortName, releaseBranchName):
+        self.shortName = shortName
+        self.releaseBranchName = releaseBranchName
 
     def icon(self):
         return "✅"
 
     def display_information(self):
-        return "Release branch present. This is as far as the tool gets ... for now."
+        return f"Release branch present: {self.releaseBranchName}"
+    
+    def possible_next_actions(self):
+        return [
+            f"List tickets in release with: python r3000.py list-tickets {self.shortName}"
+        ]
 
 
 class NoGitRepositoryStatus(Status):
@@ -85,4 +94,4 @@ class LingeringReleaseBranch(Status):
         return f"You still have an old release branch `{self.branch_name}`. Please delete it (local and on the remote)"
     
     def possible_next_actions(self):
-        return [f"git -C {self.project_location} branch -D {self.branch_name} && git -C {self.project_location} push origin --delete {self.branch_name}"]
+        return [f"Delete branch with: git -C {self.project_location} branch -D {self.branch_name} && git -C {self.project_location} push origin --delete {self.branch_name}"]
