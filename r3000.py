@@ -4,17 +4,6 @@ import subprocess
 
 from status import GitStructureUnknown, LingeringReleaseBranch, NoGitRepositoryStatus, ReleaseCouldBeInteresting, ReleaseProbablyNotInteresting, TempAllGoodStatus
 
-config_path = os.path.expanduser('~/.r3000/config.yaml')
-
-with open(config_path, 'r') as f:
-    config = yaml.safe_load(f)
-
-
-def find_git_branches_starting_with_name(repository_location, starts_with):
-    output = subprocess.check_output(
-        ['git', 'branch'], cwd=repository_location)
-    branches = [branch.strip('*').strip() for branch in output.decode().split('\n') if branch.strip()]
-    return [branch for branch in branches if branch.startswith(starts_with)]
 
 def get_project_status(project_location):
 
@@ -46,6 +35,24 @@ def get_project_status(project_location):
 
     return TempAllGoodStatus()
 
+def find_git_branches_starting_with_name(repository_location, starts_with):
+    output = subprocess.check_output(
+        ['git', 'branch'], cwd=repository_location)
+    branches = [branch.strip('*').strip()
+                for branch in output.decode().split('\n') if branch.strip()]
+    return [branch for branch in branches if branch.startswith(starts_with)]
+
+def sync_git(location):
+    subprocess.call(['git', 'fetch', '--quiet'], cwd=location)
+
+
+config_path = os.path.expanduser('~/.r3000/config.yaml')
+
+with open(config_path, 'r') as f:
+    config = yaml.safe_load(f)
+
+for project in config['projects']:
+    sync_git(project.get('location'))
 
 for project in config['projects']:
 
