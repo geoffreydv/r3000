@@ -2,6 +2,8 @@ import argparse
 import yaml
 import os
 import subprocess
+import re
+import urllib.parse
 
 from status import GitStructureUnknown, LingeringReleaseBranch, NoGitRepositoryStatus, ReleaseCouldBeInteresting, ReleaseProbablyNotInteresting, ReleaseBranchReady
 
@@ -74,6 +76,20 @@ def list_status(project):
         for action in next_actions:
             print(f"  - {action}")
 
+def list_tickets(project_location, release_branch):
+
+    log_output = subprocess.check_output(['git', '--no-pager', 'log', '--cherry', '--pretty=oneline', f'master..{release_branch}'], cwd=project_location).strip().decode()
+
+    # Extract the ticket numbers from the commit messages
+    ticket_numbers = re.findall(r'REN-\d{2,6}', log_output)
+
+    # Return a list of unique ticket numbers
+    return list(set(ticket_numbers))
+
+def find_project_with_name(projects, target_name):
+    for project in projects:
+        if project.get("technical-name") == target_name:
+            return project
 
 if __name__ == '__main__':
 
@@ -81,8 +97,11 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, default='~/.r3000/config.yaml', help='path to config file')
 
     subparsers = parser.add_subparsers(dest='action', required=True)
+
     list_parser = subparsers.add_parser('list', help='Lists the status of all projects')
     update_parser = subparsers.add_parser('update', help='Brings your branches up to date with the remote')
+    list_tickets_parser = subparsers.add_parser('list-tickets', help='List JIRA tickets between master and the release branch')    
+    list_tickets_parser.add_argument('project_name', type=str, help='The technical name of a project in your config file')
 
     args = parser.parse_args()
 
@@ -98,3 +117,11 @@ if __name__ == '__main__':
     if args.action == 'list':
         for project in config['projects']:
             list_status(project)
+
+    if args.action == 'list-tickets':
+        project = find_project_with_name(config['projects'], args.project_name)
+        last_rc_name = find_git_branches_starting_with_name(project.get("location"), 'release/')[0]
+
+        tickets = ','.join(list_tickets(project.get("location"), last_rc_name))
+        jql = urllib.parse.quote(f'issueKey in ({tickets}) and issuetype not in subTaskIssueTypes()')
+        print(f'https://rsautomotive.atlassian.net/issues/?jql={jql}')
