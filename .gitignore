@@ -1,3 +1,4 @@
 r3000
 __pycache__
 http-requests.http
+.env

@@ -6,7 +6,7 @@ import re
 import urllib.parse
 
 from status import GitStructureUnknown, LingeringReleaseBranch, NoGitRepositoryStatus, ReleaseCouldBeInteresting, ReleaseProbablyNotInteresting, ReleaseBranchReady
-
+from dotenv import load_dotenv
 
 def get_project_status(project):
 
@@ -92,6 +92,10 @@ def find_project_with_name(projects, target_name):
             return project
 
 if __name__ == '__main__':
+
+    load_dotenv()
+
+    print(os.getenv('BITBUCKET_URL'))
 
     parser = argparse.ArgumentParser(description='CLI tools to automate the boring stuff of releases')
     parser.add_argument('--config', type=str, default='~/.r3000/config.yaml', help='path to config file')
