@@ -21,7 +21,7 @@ class ReleaseBranchReady(Status):
 
     def display_information(self):
         return f"Release branch present: {self.releaseBranchName}"
-    
+
     def possible_next_actions(self):
         return [
             f"List tickets in release with: python r3000.py list-tickets {self.shortName}"
@@ -39,13 +39,17 @@ class NoGitRepositoryStatus(Status):
     def display_information(self):
         return f"No .git repository found at location {self.location}"
 
+
 class GitStructureUnknown(Status):
+
+    def __init__(self, missing_branch):
+        self.missing_branch = missing_branch
 
     def icon(self):
         return "😐"
 
     def display_information(self):
-        return f"GIT structure not supported yet. No branch named `develop` found."
+        return f"GIT structure not supported yet. No branch named `{self.missing_branch}` found."
 
 
 class ReleaseCouldBeInteresting(Status):
@@ -92,6 +96,6 @@ class LingeringReleaseBranch(Status):
 
     def display_information(self):
         return f"You still have an old release branch `{self.branch_name}`. Please delete it (local and on the remote)"
-    
+
     def possible_next_actions(self):
         return [f"Delete branch with: git -C {self.project_location} branch -D {self.branch_name} && git -C {self.project_location} push origin --delete {self.branch_name}"]
