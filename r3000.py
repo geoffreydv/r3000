@@ -16,10 +16,10 @@ def get_project_status(project):
         return NoGitRepositoryStatus(project_location)
 
     if not find_git_branches_starting_with_name(project_location, 'develop'):
-        return GitStructureUnknown('develop')
+        return GitStructureUnknown('develop', project_location)
     
     if not find_git_branches_starting_with_name(project_location, 'master'):
-        return GitStructureUnknown('master')
+        return GitStructureUnknown('master', project_location)
 
     release_branches = find_git_branches_starting_with_name(
         project_location, 'release/')

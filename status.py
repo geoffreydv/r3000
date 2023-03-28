@@ -42,14 +42,20 @@ class NoGitRepositoryStatus(Status):
 
 class GitStructureUnknown(Status):
 
-    def __init__(self, missing_branch):
+    def __init__(self, missing_branch, project_location):
         self.missing_branch = missing_branch
+        self.project_location = project_location
 
     def icon(self):
         return "😐"
 
     def display_information(self):
         return f"GIT structure not supported yet. No branch named `{self.missing_branch}` found."
+    
+    def possible_next_actions(self):
+        return [
+            f"git -C {self.project_location} checkout {self.missing_branch}"
+        ]
 
 
 class ReleaseCouldBeInteresting(Status):
