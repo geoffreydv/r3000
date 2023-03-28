@@ -79,9 +79,9 @@ def list_status(project):
         for action in next_actions:
             print(f"  - {action}")
 
-def list_tickets(project_location, release_branch):
+def list_tickets_between(project_location, reference_branch, branch_to_check):
 
-    log_output = subprocess.check_output(['git', '--no-pager', 'log', '--cherry', '--pretty=oneline', f'master..{release_branch}'], cwd=project_location).strip().decode()
+    log_output = subprocess.check_output(['git', '--no-pager', 'log', '--cherry', '--pretty=oneline', f'{reference_branch}..{branch_to_check}'], cwd=project_location).strip().decode()
 
     # Extract the ticket numbers from the commit messages
     ticket_numbers = re.findall(r'REN-\d{2,6}', log_output)
@@ -129,6 +129,6 @@ if __name__ == '__main__':
         project = find_project_with_name(config['projects'], args.project_name)
         last_rc_name = find_git_branches_starting_with_name(project.get("location"), 'release/')[0]
 
-        tickets = ','.join(list_tickets(project.get("location"), last_rc_name))
+        tickets = ','.join(list_tickets_between(project.get("location"), "master", last_rc_name))
         jql = urllib.parse.quote(f'issueKey in ({tickets}) and issuetype not in subTaskIssueTypes()')
         print(f'https://rsautomotive.atlassian.net/issues/?jql={jql}')
