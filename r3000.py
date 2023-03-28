@@ -8,6 +8,7 @@ import urllib.parse
 from status import GitStructureUnknown, LingeringReleaseBranch, NoGitRepositoryStatus, ReleaseCouldBeInteresting, ReleaseProbablyNotInteresting, ReleaseBranchReady
 from dotenv import load_dotenv
 
+
 def get_project_status(project):
 
     project_location = project.get('location')
@@ -21,17 +22,16 @@ def get_project_status(project):
     if not find_git_branches_starting_with_name(project_location, 'master'):
         return GitStructureUnknown('master', project_location)
 
-    release_branches = find_git_branches_starting_with_name(
-        project_location, 'release/')
+    release_branches = find_git_branches_starting_with_name(project_location, 'release/')
 
     if not release_branches:
-        output = subprocess.check_output(
-            ['git', 'rev-list', '--count', 'master..develop'], cwd=project_location)
-        commit_count = int(output.decode().strip())
-        if commit_count > 2:
-            return ReleaseCouldBeInteresting(commit_count)
+        tickets_between = list_tickets_between(project_location, 'master', 'develop')
+        referenced_ticket_count = len(tickets_between)
+        
+        if referenced_ticket_count > 0:
+            return ReleaseCouldBeInteresting(tickets_between)
         else:
-            return ReleaseProbablyNotInteresting(commit_count)
+            return ReleaseProbablyNotInteresting()
 
     latest_release_branch = release_branches[-1].strip()
     output = subprocess.check_output(

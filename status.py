@@ -60,26 +60,23 @@ class GitStructureUnknown(Status):
 
 class ReleaseCouldBeInteresting(Status):
 
-    def __init__(self, commitCount):
-        self.commitCount = commitCount
+    def __init__(self, tickets):
+        self.tickets = tickets
 
     def icon(self):
         return "👀"
 
     def display_information(self):
-        return f"It might be worth releasing this app. There are {self.commitCount} new commits on develop compared to the master branch."
+        return f"It might be worth releasing this app. {len(self.tickets)} referenced tickets in dev - {','.join(self.tickets)}"
 
 
 class ReleaseProbablyNotInteresting(Status):
-
-    def __init__(self, commitCount):
-        self.commitCount = commitCount
 
     def icon(self):
         return "➖"
 
     def display_information(self):
-        return f"Release is probably not interesting. There are {self.commitCount} commits on dev"
+        return f"Release is probably not interesting. There are no commits with referenced ticket numbers on dev"
 
 
 class NoReleaseBranchStatus(Status):
