@@ -50,11 +50,11 @@ class GitStructureUnknown(Status):
         return "😐"
 
     def display_information(self):
-        return f"GIT structure not supported yet. No branch named `{self.missing_branch}` found."
+        return f"We only support gitflow right now but no branch named `{self.missing_branch}` found."
     
     def possible_next_actions(self):
         return [
-            f"git -C {self.project_location} checkout {self.missing_branch}"
+            f"If you think the branch exists, run python r3000.py update-workspace"
         ]
 
 
@@ -67,7 +67,12 @@ class ReleaseCouldBeInteresting(Status):
         return "👀"
 
     def display_information(self):
-        return f"It might be worth releasing this app. {len(self.tickets)} referenced tickets in dev - {','.join(self.tickets)}"
+        return f"It might be worth releasing this app. {len(self.tickets)} tickets mentioned in dev commits"
+    
+    def possible_next_actions(self):
+        return [
+            f"Referenced tickets: {','.join(self.tickets)}"
+        ]
 
 
 class ReleaseProbablyNotInteresting(Status):
