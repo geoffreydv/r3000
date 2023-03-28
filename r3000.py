@@ -52,19 +52,36 @@ def find_git_branches_starting_with_name(repository_location, starts_with):
     return [branch for branch in branches if branch.startswith(starts_with)]
 
 
-def sync_git(location, quiet):
-    command_parts = ['git', 'fetch']
+def sync_git(repo_path):
 
-    if quiet:
-        command_parts.append('--quiet')
+    # Define the branches that we want to check
+    branch_patterns = ["master", "develop", "release/", "hotfix/"]
 
-    subprocess.call(command_parts, cwd=location)
+    # Get the list of remote branches
+    git_ls_remote_cmd = ['git', '-C', repo_path, 'ls-remote', '--heads', 'origin']
+    git_ls_remote_output = subprocess.check_output(git_ls_remote_cmd).decode().strip()
+    remote_branches = [line.split('\t')[1].split('refs/heads/')[1] for line in git_ls_remote_output.split('\n')]
+
+    # Check out or pull each matching branch
+    for branch_pattern in branch_patterns:
+        for branch in remote_branches:
+            if branch.startswith(branch_pattern):
+                try:
+                    subprocess.check_output(['git', '-C', repo_path, 'show-ref', '--verify', '--quiet', f"refs/heads/{branch}"])
+                    # Branch exists locally, so do a pull
+                    subprocess.check_output(['git', '-C', repo_path, 'checkout', branch, '--quiet'])
+                    subprocess.check_output(['git', '-C', repo_path, 'pull', 'origin', branch, '--quiet'])
+                    print(f'Pulled changes from origin/{branch} into {branch}.')
+                except subprocess.CalledProcessError:
+                    # Branch doesn't exist locally, so do a checkout
+                    subprocess.check_output(['git', '-C', repo_path, 'checkout', '-b', branch, f'origin/{branch}', '--quiet'])
+                    print(f'Branch {branch} was not in your local repo yet. Now it is.')
 
 
 def prepare_workspace(project):
     location = project.get('location')
     print(f'Syncing git status of {location}')
-    sync_git(location, False)
+    sync_git(location)
 
 
 def list_status(project):
@@ -106,7 +123,7 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers(dest='action', required=True)
 
     list_parser = subparsers.add_parser('list', help='Lists the status of all projects')
-    update_parser = subparsers.add_parser('update', help='Brings your branches up to date with the remote')
+    update_parser = subparsers.add_parser('prepare-workspace', help='Brings your branches up to date with the remote')
     list_tickets_parser = subparsers.add_parser('list-tickets', help='List JIRA tickets between master and the release branch')    
     list_tickets_parser.add_argument('project_name', type=str, help='The technical name of a project in your config file')
 
@@ -117,7 +134,7 @@ if __name__ == '__main__':
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
-    if args.action == 'update':
+    if args.action == 'prepare-workspace':
         for project in config['projects']:
             prepare_workspace(project)
 
