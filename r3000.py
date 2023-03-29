@@ -7,10 +7,17 @@ import urllib.parse
 
 from status import GitStructureUnknown, LingeringReleaseBranch, NoGitRepositoryStatus, ReleaseCouldBeInteresting, ReleaseProbablyNotInteresting, ReleaseBranchReady
 
+class Project:
+
+    def __init__(self, config_entry):
+        self.name = config_entry.get('name')
+        self.location = config_entry.get('location')
+        self.technical_name = config_entry.get('technical-name')
+    
 
 def get_project_status(project):
 
-    project_location = project.get('location')
+    project_location = project.location
 
     if not os.path.exists(os.path.join(project_location, '.git')):
         return NoGitRepositoryStatus(project_location)
@@ -40,7 +47,7 @@ def get_project_status(project):
     if commit_count == 0:
         return LingeringReleaseBranch(project_location, latest_release_branch)
 
-    return ReleaseBranchReady(project.get("technical-name"), latest_release_branch)
+    return ReleaseBranchReady(project.technical_name, latest_release_branch)
 
 
 def find_git_branches_starting_with_name(repository_location, starts_with):
@@ -78,13 +85,13 @@ def sync_git(repo_path):
 
 
 def prepare_workspace(project):
-    location = project.get('location')
+    location = project.location
     print(f'Syncing git status of {location}')
     sync_git(location)
 
 
 def list_status(project):
-    name = project.get('name')
+    name = project.name
 
     status = get_project_status(project)
 
@@ -107,7 +114,7 @@ def list_tickets_between(project_location, reference_branch, branch_to_check):
 
 def find_project_with_name(projects, target_name):
     for project in projects:
-        if project.get("technical-name") == target_name:
+        if project.technical_name == target_name:
             return project
 
 if __name__ == '__main__':
@@ -124,23 +131,26 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    config_path = os.path.expanduser(args.config)
-
-    with open(config_path, 'r') as f:
+    with open(os.path.expanduser(args.config), 'r') as f:
         config = yaml.safe_load(f)
 
+    projects = []
+
+    for project_config in config['projects']:
+        projects.append(Project(project_config))
+
     if args.action == 'prepare-workspace':
-        for project in config['projects']:
+        for project in projects:
             prepare_workspace(project)
 
     if args.action == 'list':
-        for project in config['projects']:
+        for project in projects:
             list_status(project)
 
     if args.action == 'list-tickets':
-        project = find_project_with_name(config['projects'], args.project_name)
-        last_rc_name = find_git_branches_starting_with_name(project.get("location"), 'release/')[0]
+        project = find_project_with_name(projects, args.project_name)
+        last_rc_name = find_git_branches_starting_with_name(project.location, 'release/')[0]
 
-        tickets = ','.join(list_tickets_between(project.get("location"), "master", last_rc_name))
+        tickets = ','.join(list_tickets_between(project.location, "master", last_rc_name))
         jql = urllib.parse.quote(f'issueKey in ({tickets}) and issuetype not in subTaskIssueTypes()')
         print(f'https://rsautomotive.atlassian.net/issues/?jql={jql}')
