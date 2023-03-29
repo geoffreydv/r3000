@@ -5,15 +5,20 @@ import subprocess
 import re
 import urllib.parse
 
-from status import GitStructureUnknown, LingeringReleaseBranch, NoGitRepositoryStatus, ReleaseCouldBeInteresting, ReleaseProbablyNotInteresting, ReleaseBranchReady
+from status import GitStructureUnknown, LingeringReleaseBranch, NoGitRepositoryStatus, ReleaseCouldBeInteresting, \
+    ReleaseProbablyNotInteresting, ReleaseBranchReady
+
 
 class Project:
-
     def __init__(self, config_entry):
         self.name = config_entry.get('name')
         self.location = config_entry.get('location')
         self.technical_name = config_entry.get('technical-name')
-    
+        self.custom_properties = config_entry.get('custom-properties')
+
+        if not self.custom_properties:
+            self.custom_properties = {}
+
 
 def get_project_status(project):
 
