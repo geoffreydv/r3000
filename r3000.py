@@ -7,6 +7,7 @@ import urllib.parse
 
 from status import GitStructureUnknown, LingeringReleaseBranch, NoGitRepositoryStatus, ReleaseCouldBeInteresting, \
     ReleaseProbablyNotInteresting, ReleaseBranchReady
+from veryspecific import RsProjectInfo
 
 
 class Project:
@@ -151,6 +152,7 @@ if __name__ == '__main__':
     if args.action == 'list':
         for project in projects:
             list_status(project)
+            RsProjectInfo().get_deployed_commit(project, config, 'production')
 
     if args.action == 'list-tickets':
         project = find_project_with_name(projects, args.project_name)
